@@ -17,13 +17,15 @@ Update with `flatpak update`.
 
 ## Game folder access
 
-The app has no filesystem access by default. Grant it to your WoW install folder once, for example:
+The app has no filesystem access by default. Grant it to your WoW install folder once, for example for Faugus:
 
-    flatpak override --user --filesystem=/path/to/wow io.wowup.WowUp
+    flatpak override --user --filesystem=$HOME/Faugus/battlenet io.wowup.WowUp 
+
+> **Note:** WowUp does not support scanning for WoW installations created by Faugus. Add your install manually in WowUp, using the folder you granted access to above.
 
 Overrides are stored per user and per app ID. They survive updates and apply to both `stable` and `beta`.
 
-Revoke with `flatpak override --user --nofilesystem=/path/to/wow io.wowup.WowUp`, or manage it in [Flatseal](https://flathub.org/apps/com.github.tchx84.Flatseal).
+Revoke with `flatpak override --user --nofilesystem=$HOME/Faugus/battlenet io.wowup.WowUp`, or manage it in [Flatseal](https://flathub.org/apps/com.github.tchx84.Flatseal).
 
 ## Maintenance
 
