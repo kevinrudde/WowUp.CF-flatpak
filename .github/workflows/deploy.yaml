@@ -1,0 +1,65 @@
+name: Deploy
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'io.wowup.WowUp*.yml'
+      - 'io.wowup.WowUp.metainfo.xml'
+      - 'io.wowup.WowUp.desktop'
+      - 'wowup.sh'
+      - '.github/workflows/deploy.yaml'
+  workflow_dispatch:
+
+concurrency:
+  group: deploy
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    container:
+      image: ghcr.io/andyholmes/flatter/freedesktop:25.08
+      options: --privileged
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7.0.1
+
+      - name: Setup GPG
+        id: gpg
+        uses: crazy-max/ghaction-import-gpg@v7.0.0
+        with:
+          gpg_private_key: ${{ secrets.GPG_PRIVATE_KEY }}
+          passphrase: ${{ secrets.GPG_PASSPHRASE }}
+
+      # flatter doesn't handle this for some reason
+      - name: Install base app
+        run: |
+          base_name="$(grep '^base:' io.wowup.WowUp.yml | awk '{print $2}')"
+          base_version="$(grep '^base-version:' io.wowup.WowUp.yml | awk '{print $2}')"
+          flatpak remote-add --user --if-not-exists flathub https://dl.flathub.org/repo/flathub.flatpakrepo
+          flatpak install --user --noninteractive flathub "${base_name}/x86_64/${base_version//\'/}"
+
+      - name: Build
+        uses: andyholmes/flatter@main
+        with:
+          files: |
+            io.wowup.WowUp.yml
+            io.wowup.WowUp.beta.yml
+          gpg-sign: ${{ steps.gpg.outputs.fingerprint }}
+          upload-pages-artifact: true
+
+  deploy:
+    runs-on: ubuntu-latest
+    needs: build
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Deploy
+        id: deployment
+        uses: actions/deploy-pages@v5.0.1

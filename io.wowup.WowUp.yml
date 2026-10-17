@@ -1,0 +1,49 @@
+id: io.wowup.WowUp
+branch: stable
+
+runtime: org.freedesktop.Platform
+runtime-version: '25.08'
+sdk: org.freedesktop.Sdk
+base: org.electronjs.Electron2.BaseApp
+base-version: '25.08'
+
+command: wowup
+separate-locales: false
+
+finish-args:
+  - --share=network
+  - --share=ipc
+  - --socket=wayland
+  - --socket=fallback-x11
+  - --device=dri
+  - --talk-name=org.kde.StatusNotifierWatcher
+
+modules:
+  - name: wowup
+    buildsystem: simple
+    build-commands:
+      - chmod +x wowup.AppImage
+      - ./wowup.AppImage --appimage-extract
+      - rm -f squashfs-root/AppRun squashfs-root/*.desktop squashfs-root/wowup-cf.png
+      - mkdir -p /app/lib && mv squashfs-root /app/lib/wowup
+      - install -Dm755 wowup.sh /app/bin/wowup
+      - |
+        for icon in /app/lib/wowup/usr/share/icons/hicolor/*/apps/wowup-cf.png; do
+          size=$(basename "$(dirname "$(dirname "$icon")")")
+          install -Dm644 "$icon" "/app/share/icons/hicolor/$size/apps/io.wowup.WowUp.png"
+        done
+      - rm -rf /app/lib/wowup/usr
+      - install -Dm644 io.wowup.WowUp.desktop -t /app/share/applications
+      - install -Dm644 io.wowup.WowUp.metainfo.xml -t /app/share/metainfo
+    sources:
+      - type: file
+        dest-filename: wowup.AppImage
+        url: https://github.com/WowUp/WowUp.CF/releases/download/v2.24.0/WowUp-CF-2.24.0.AppImage
+        sha256: 69a479f1750103bf093e4f2db030fa03e80060991e2479721e261c443f29b420
+        only-arches: [x86_64]
+      - type: file
+        path: wowup.sh
+      - type: file
+        path: io.wowup.WowUp.desktop
+      - type: file
+        path: io.wowup.WowUp.metainfo.xml

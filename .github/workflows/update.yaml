@@ -1,0 +1,46 @@
+name: Update
+
+on:
+  schedule:
+    - cron: '0 6 * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - channel: stable
+            manifest: io.wowup.WowUp.yml
+          - channel: beta
+            manifest: io.wowup.WowUp.beta.yml
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7.0.1
+
+      - name: Update manifest
+        id: update
+        run: scripts/update-manifest.sh "$CHANNEL" "$MANIFEST"
+        env:
+          CHANNEL: ${{ matrix.channel }}
+          MANIFEST: ${{ matrix.manifest }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Create pull request
+        if: steps.update.outputs.version != ''
+        uses: peter-evans/create-pull-request@v8.1.1
+        with:
+          title: Update ${{ matrix.channel }} to ${{ steps.update.outputs.version }}
+          body: |
+            <https://github.com/WowUp/WowUp.CF/releases/tag/${{ steps.update.outputs.version }}>
+
+            Review before merging: merging publishes this build to the Flatpak repository.
+          commit-message: Update ${{ matrix.channel }} to ${{ steps.update.outputs.version }}
+          branch: update-${{ matrix.channel }}
+          delete-branch: true
