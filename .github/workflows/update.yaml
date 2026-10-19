@@ -7,7 +7,7 @@ on:
 
 permissions:
   contents: write
-  pull-requests: write
+  actions: write
 
 jobs:
   update:
@@ -32,15 +32,16 @@ jobs:
           MANIFEST: ${{ matrix.manifest }}
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Create pull request
+      - name: Commit and push to main
         if: steps.update.outputs.version != ''
-        uses: peter-evans/create-pull-request@v8.1.1
-        with:
-          title: Update ${{ matrix.channel }} to ${{ steps.update.outputs.version }}
-          body: |
-            <https://github.com/WowUp/WowUp.CF/releases/tag/${{ steps.update.outputs.version }}>
-
-            Review before merging: merging publishes this build to the Flatpak repository.
-          commit-message: Update ${{ matrix.channel }} to ${{ steps.update.outputs.version }}
-          branch: update-${{ matrix.channel }}
-          delete-branch: true
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git commit -am "Update $CHANNEL to $VERSION"
+          git pull --rebase origin "$GITHUB_REF_NAME"
+          git push origin "HEAD:$GITHUB_REF_NAME"
+          gh workflow run deploy.yaml --ref "$GITHUB_REF_NAME"
+        env:
+          CHANNEL: ${{ matrix.channel }}
+          VERSION: ${{ steps.update.outputs.version }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
