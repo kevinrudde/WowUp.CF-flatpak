@@ -38,8 +38,8 @@ modules:
     sources:
       - type: file
         dest-filename: wowup.AppImage
-        url: https://github.com/WowUp/WowUp.CF/releases/download/v2.25.4/WowUp-CF-2.25.4.AppImage
-        sha256: b4a3856e8694a35c202c9db18cb3cecaa1eb7fc0e8fa84b46732f67dcb3c25ce
+        url: https://github.com/WowUp/WowUp.CF/releases/download/v2.25.5/WowUp-CF-2.25.5.AppImage
+        sha256: 387792c43c1359ddc35e6781000a06ff0fc38fb55785dc029a7d97f4f13a4839
         only-arches: [x86_64]
       - type: file
         path: wowup.sh
